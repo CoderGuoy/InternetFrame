@@ -1,0 +1,12 @@
+<resources>
+    <string name="app_name">InternetFrame</string>
+
+    <string name="Tab1">首页</string>
+    <string name="Tab2">Tab2</string>
+    <string name="Tab3">Tab3</string>
+    <string name="Tab4">Tab4</string>
+    <string name="Tab5">我的</string>
+
+    <string name="FAILE">加载失败,点击重试</string>
+    <string name="LOADING">努力加载中...</string>
+</resources>
