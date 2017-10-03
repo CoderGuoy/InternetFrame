@@ -10,7 +10,6 @@
         <LinearLayout
             style="@style/MatchMatch.Vertical">
 
-
             <FrameLayout
                 android:id="@+id/tab_content"
                 style="@style/MatchAuto"

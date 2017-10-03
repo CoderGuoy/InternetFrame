@@ -19,6 +19,6 @@ public class Fragment3 extends MvvmBaseFragment<Fragment3Binding> {
     public void onActivityCreated(@Nullable Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
         showContentView();
-        bindingView.textview.setText("tab3");
+        bindingView.textview.setText(getString(R.string.Tab3));
     }
 }
