@@ -1,8 +1,8 @@
-package com.coderguoy.internetframe;
+package com.coderguoy.internetframe.base;
 
 import android.databinding.DataBindingUtil;
 import android.databinding.ViewDataBinding;
-import android.graphics.drawable.AnimationDrawable;
+import android.graphics.drawable.Animatable;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
@@ -13,19 +13,15 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 
+import com.coderguoy.internetframe.R;
+import com.coderguoy.internetframe.utils.NetUtils;
 import com.coderguoy.internetframe.utils.PerfectClickListener;
-
-import rx.Subscription;
-import rx.subscriptions.CompositeSubscription;
 
 /**
  * @Version:1.0
  * @Author:Guoy
  * @CreateTime:2017年4月7日
  * @Descrpiton:MVVM模式的BaseFragment
- * @UpDateAuthor:
- * @UpDateTime:
- * @UpDataWhat:
  */
 public abstract class MvvmBaseFragment<SV extends ViewDataBinding> extends Fragment {
 
@@ -40,8 +36,7 @@ public abstract class MvvmBaseFragment<SV extends ViewDataBinding> extends Fragm
     // 内容布局
     protected RelativeLayout mContainer;
     // 动画
-    private AnimationDrawable mAnimationDrawable;
-    private CompositeSubscription mCompositeSubscription;
+    private Animatable mAnimationDrawable;
 
     @Nullable
     @Override
@@ -93,7 +88,7 @@ public abstract class MvvmBaseFragment<SV extends ViewDataBinding> extends Fragm
         ImageView img = getView(R.id.img_progress);
 
         //加载动画
-        mAnimationDrawable = (AnimationDrawable) img.getDrawable();
+        mAnimationDrawable = (Animatable) img.getDrawable();
         // 默认进入页面就开启动画
         if (!mAnimationDrawable.isRunning()) {
             mAnimationDrawable.start();
@@ -103,11 +98,12 @@ public abstract class MvvmBaseFragment<SV extends ViewDataBinding> extends Fragm
         mRefresh.setOnClickListener(new PerfectClickListener() {
             @Override
             protected void onNoDoubleClick(View v) {
-                showLoading();
+//                showLoading();
                 onRefresh();
             }
         });
         bindingView.getRoot().setVisibility(View.GONE);
+        onRefresh();
     }
 
     protected <T extends View> T getView(int id) {
@@ -123,8 +119,22 @@ public abstract class MvvmBaseFragment<SV extends ViewDataBinding> extends Fragm
      * 加载失败后点击后的操作
      */
     protected void onRefresh() {
-
+        if (!NetUtils.isNetworkConnected(getActivity())) {//没有网络
+            showError();
+        } else {
+            showLoading();
+            getData();
+        }
     }
+
+    /**
+     * 进行网络请求时，不用重写showContentView
+     *
+     * 不进行网络请求时，需要手动添加showContentView
+     */
+    protected void getData() {
+    }
+
 
     /**
      * 显示加载中状态
@@ -180,27 +190,6 @@ public abstract class MvvmBaseFragment<SV extends ViewDataBinding> extends Fragm
         }
         if (bindingView.getRoot().getVisibility() != View.GONE) {
             bindingView.getRoot().setVisibility(View.GONE);
-        }
-    }
-
-    public void addSubscription(Subscription s) {
-        if (this.mCompositeSubscription == null) {
-            this.mCompositeSubscription = new CompositeSubscription();
-        }
-        this.mCompositeSubscription.add(s);
-    }
-
-    @Override
-    public void onDestroy() {
-        super.onDestroy();
-        if (this.mCompositeSubscription != null && mCompositeSubscription.hasSubscriptions()) {
-            this.mCompositeSubscription.unsubscribe();
-        }
-    }
-
-    public void removeSubscription() {
-        if (this.mCompositeSubscription != null && mCompositeSubscription.hasSubscriptions()) {
-            this.mCompositeSubscription.unsubscribe();
         }
     }
 }

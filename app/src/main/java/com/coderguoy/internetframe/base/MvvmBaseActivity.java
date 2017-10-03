@@ -1,11 +1,11 @@
-package com.coderguoy.internetframe;
+package com.coderguoy.internetframe.base;
 
+import android.content.res.Configuration;
+import android.content.res.Resources;
 import android.databinding.DataBindingUtil;
 import android.databinding.ViewDataBinding;
-import android.graphics.drawable.AnimationDrawable;
-import android.os.Bundle;
+import android.graphics.drawable.Animatable;
 import android.support.annotation.LayoutRes;
-import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -14,8 +14,12 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 
+import com.coderguoy.internetframe.R;
 import com.coderguoy.internetframe.databinding.ActivityBaseMvvmBinding;
+import com.coderguoy.internetframe.utils.CommonUtils;
+import com.coderguoy.internetframe.utils.NetUtils;
 import com.coderguoy.internetframe.utils.PerfectClickListener;
+import com.coderguoy.internetframe.utils.StatusBarUtils;
 
 
 /**
@@ -23,9 +27,6 @@ import com.coderguoy.internetframe.utils.PerfectClickListener;
  * @Author:Guoy
  * @CreateTime:2017年4月7日
  * @Descrpiton:MVVM模式的BaseActivity
- * @UpDateAuthor:
- * @UpDateTime:
- * @UpDataWhat:
  */
 
 public class MvvmBaseActivity<SV extends ViewDataBinding> extends AppCompatActivity {
@@ -33,12 +34,8 @@ public class MvvmBaseActivity<SV extends ViewDataBinding> extends AppCompatActiv
     private LinearLayout llProgressBar;//努力加载中...
     private View refresh;//加载失败
     private ActivityBaseMvvmBinding mBaseBinding;
-    private AnimationDrawable mAnimationDrawable;
+    private Animatable mAnimationDrawable;
 
-    @Override
-    protected void onCreate(@Nullable Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-    }
 
     @Override
     public void setContentView(@LayoutRes int layoutResID) {
@@ -50,18 +47,21 @@ public class MvvmBaseActivity<SV extends ViewDataBinding> extends AppCompatActiv
         RelativeLayout mContainer = (RelativeLayout) mBaseBinding.getRoot().findViewById(R.id.container);
         mContainer.addView(bindingView.getRoot());
         getWindow().setContentView(mBaseBinding.getRoot());
+        overridePendingTransition(R.anim.slide_left_in, R.anim.slide_left_out);
 
+        // 设置透明状态栏
+        StatusBarUtils.setColor(this, CommonUtils.getColor(R.color.colorTheme), 0);
         llProgressBar = getView(R.id.ll_progress_bar);
         refresh = getView(R.id.ll_error_refresh);
-        ImageView img = getView(R.id.img_progress);
 
         // 加载动画
-        mAnimationDrawable = (AnimationDrawable) img.getDrawable();
+        ImageView img = getView(R.id.img_progress);
+        mAnimationDrawable = (Animatable) img.getDrawable();
+
         // 默认进入页面就开启动画
         if (!mAnimationDrawable.isRunning()) {
             mAnimationDrawable.start();
         }
-        setToolBar();
         // 点击加载失败布局
         refresh.setOnClickListener(new PerfectClickListener() {
             @Override
@@ -71,34 +71,7 @@ public class MvvmBaseActivity<SV extends ViewDataBinding> extends AppCompatActiv
             }
         });
         bindingView.getRoot().setVisibility(View.GONE);
-    }
-
-    /**
-     * 设置ToolBar的返回
-     */
-    private void setToolBar() {
-        mBaseBinding.toolbarBack.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                finish();
-            }
-        });
-    }
-
-    /**
-     * 设置标题
-     * @param title
-     */
-    public void setTitle(String title) {
-        mBaseBinding.textviewTitle.setText(title);
-    }
-
-    /**
-     * 设置整个ToolBar是否显示
-     * @param visible
-     */
-    public void setToolbarVisible(int visible){
-        mBaseBinding.toolbar.setVisibility(visible);
+        onRefresh();
     }
 
     protected <T extends View> T getView(int id) {
@@ -106,10 +79,22 @@ public class MvvmBaseActivity<SV extends ViewDataBinding> extends AppCompatActiv
     }
 
     /**
-     * 失败后点击刷新
+     * 加载失败后点击后的操作
      */
     protected void onRefresh() {
+        if (!NetUtils.isNetworkConnected(getApplicationContext())) {//没有网络
+            showError();
+        } else {
+            showLoading();
+            getData();
+        }
+    }
 
+    /**
+     * 进行网络请求时，不用重写showContentView
+     * 不进行网络请求时，需要手动添加showContentView
+     */
+    protected void getData() {
     }
 
     /**
@@ -163,6 +148,13 @@ public class MvvmBaseActivity<SV extends ViewDataBinding> extends AppCompatActiv
         }
     }
 
+    @Override
+    public void finish() {
+        super.finish();
+        overridePendingTransition(R.anim.slide_right_in, R.anim.slide_right_out);
+    }
+
+
     /**
      * 添加fragment
      *
@@ -179,5 +171,14 @@ public class MvvmBaseActivity<SV extends ViewDataBinding> extends AppCompatActiv
 
     protected void removeFragment(MvvmBaseFragment fragment) {
         getSupportFragmentManager().beginTransaction().remove(fragment).commit();
+    }
+
+    @Override
+    public Resources getResources() {
+        Resources res = super.getResources();
+        Configuration config = new Configuration();
+        config.setToDefaults();
+        res.updateConfiguration(config, res.getDisplayMetrics());
+        return res;
     }
 }
