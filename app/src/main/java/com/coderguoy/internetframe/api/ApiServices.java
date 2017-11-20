@@ -25,5 +25,4 @@ public interface ApiServices {
     Observable<GankIoDataBean> getGankIoData(@Path("type") String type,
                                              @Path("pre_page") int pre_page,
                                              @Path("page") int page);
-
 }
